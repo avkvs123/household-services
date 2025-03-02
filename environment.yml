@@ -1,0 +1,21 @@
+name: myenv
+dependencies:
+  - python # Specify the Python version you need
+  - flask
+  - SQLAlchemy
+  - flask-sqlalchemy
+  - flask-login
+  - flask-restful
+  - flask-security-too
+  - flask-wtf
+  - werkzeug
+  - email-validator
+  - pip
+  - pip:
+      - flask[async]
+# Install it using -
+# conda env create -f environment.yml --prefix .\myenv
+# For installation in local folder
+# For activating the environemnt:
+# conda activate ./myenv
+
