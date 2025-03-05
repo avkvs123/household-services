@@ -1,5 +1,6 @@
-from main import app 
+from main import app, datastore
 from application.models import db, Role, Service
+from flask_security import hash_password
 
 
 with app.app_context():
@@ -15,16 +16,35 @@ with app.app_context():
     # except:
     #     pass
 
+    datastore.find_or_create_role(name='admin', description='Admin Role')
+    datastore.find_or_create_role(name='customer', description='Customer Role')
+    datastore.find_or_create_role(name='professional', description='Professional Role')
+    
+
+    if not datastore.find_user(email="admin@email.com"):
+        datastore.create_user(username= "admin", email="admin@email.com", password=hash_password("admin"), roles=["admin"])
+
+    if not datastore.find_user(email="customer1@email.com"):
+        datastore.create_user(username= "customer1", email="customer1@email.com", password=hash_password("customer1"), roles=["customer"])
+
+    if not datastore.find_user(email="professional1@email.com"):
+        datastore.create_user(username= "professional1", email="professional1@email.com", password=hash_password("professional1"), roles=["professional"], active = False)
+
+
 
     # Adding roles
-    roles = [
-        Role(id='admin', name='Admin', description='Admin Role'),
-        Role(id='customer', name='Customer', description='Customer Role'),
-        Role(id='professional', name='Professional', description='Professional Role')
-    ]
+    # roles = [
+    #     # Role(id='admin', name='Admin', description='Admin Role'),
+    #     # Role(id='customer', name='Customer', description='Customer Role'),
+    #     # Role(id='professional', name='Professional', description='Professional Role')
+
+    #     Role( name='Admin', description='Admin Role'),
+    #     Role( name='Customer', description='Customer Role'),
+    #     Role( name='Professional', description='Professional Role')
+    # ]
     
-    for role in roles:
-        db.session.merge(role)  # Ensures roles are added without duplication
+    # for role in roles:
+    #     db.session.merge(role)  # Ensures roles are added without duplication
 
     # Adding home services
     services = [
