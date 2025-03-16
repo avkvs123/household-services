@@ -1,11 +1,13 @@
-from flask import current_app as app, jsonify
+from flask import current_app as app, jsonify, request, render_template
 from flask_security import auth_required, roles_required
 from .models import Service, db, User
+from .datastore import datastore
+from werkzeug.security import check_password_hash
 
 
 @app.get('/')
 def home():
-    return "hello world"
+    return render_template("base.html")
 
 
 @app.get('/admin')
@@ -42,4 +44,31 @@ def deactivate_professional(prof_id):
     db.session.commit()  # Commit the change to the database
     return jsonify({"message": "Professional deactivated successfully"}), 200
 
+
+@app.post("/user-login")
+def user_login():
+    login_data = request.get_json()
+    email = login_data.get('email')
+    if not email:
+        return jsonify({"message":"email not provided"}), 400
     
+    user = datastore.find_user(email=email)
+    
+    if not user:
+        return jsonify({"message":"User not found"}), 404
+
+
+    password = login_data.get('password')
+
+
+    if check_password_hash(user.password, password):
+        '''
+        If you don't want to send cookie then it is used. 
+        Otherwise the /login api will provide 
+        cookie, authentication token and CSRF token.
+        '''
+        return jsonify({"token": user.get_auth_token(), "email":user.email, "role":user.roles[0].name})
+    else:
+        return jsonify({"message": "Password not matched"}), 400
+    
+

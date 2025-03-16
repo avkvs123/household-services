@@ -1,20 +1,10 @@
-from main import app, datastore
+from main import app
 from application.models import db, Role, Service
-from flask_security import hash_password
-
+from werkzeug.security import generate_password_hash 
+from application.datastore import datastore
 
 with app.app_context():
     db.create_all()
-    # admin = Role(id='admin', name='Admin', description='Admin Role')
-    # db.session.add(admin)
-    # customer = Role(id='customer', name='Customer', description='Customer Role')
-    # db.session.add(customer)
-    # professional = Role(id='professional', name='Professional', description='Professional Role')
-    # db.session.add(professional)
-    # try:
-    #     db.session.commit()
-    # except:
-    #     pass
 
     datastore.find_or_create_role(name='admin', description='Admin Role')
     datastore.find_or_create_role(name='customer', description='Customer Role')
@@ -22,13 +12,13 @@ with app.app_context():
     
 
     if not datastore.find_user(email="admin@email.com"):
-        datastore.create_user(username= "admin", email="admin@email.com", password=hash_password("admin"), roles=["admin"])
+        datastore.create_user(username= "admin", email="admin@email.com", password=generate_password_hash("admin"), roles=["admin"])
 
     if not datastore.find_user(email="customer1@email.com"):
-        datastore.create_user(username= "customer1", email="customer1@email.com", password=hash_password("customer1"), roles=["customer"])
+        datastore.create_user(username= "customer1", email="customer1@email.com", password=generate_password_hash("customer1"), roles=["customer"])
 
     if not datastore.find_user(email="professional1@email.com"):
-        datastore.create_user(username= "professional1", email="professional1@email.com", password=hash_password("professional1"), roles=["professional"], active = False)
+        datastore.create_user(username= "professional1", email="professional1@email.com", password=generate_password_hash("professional1"), roles=["professional"], active = False)
 
 
 

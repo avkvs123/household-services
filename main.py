@@ -1,8 +1,9 @@
 from flask import Flask
 from application.models import db, User, Role
-from flask_security import SQLAlchemyUserDatastore, Security
+from flask_security import Security
 from config import  DevelopmentConfig
 from application.resources import api
+from application.datastore import datastore
 
 
 def create_app():
@@ -10,7 +11,7 @@ def create_app():
     app.config.from_object(DevelopmentConfig)
     db.init_app(app)
     api.init_app(app)
-    datastore = SQLAlchemyUserDatastore(db, User, Role)
+    
     app.security = Security(app, datastore)
     with app.app_context():
         import application.views
