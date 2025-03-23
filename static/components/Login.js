@@ -13,6 +13,16 @@ export default {
         v-model="credential.password">
         <button type="button" class="btn btn-primary mt-2" @click='login' > Login </button>
         <div class="mt-2 text-danger">{{error}}</div>
+
+        <div class="mt-3">
+          <p>Register as Customer <router-link to="/signup-customer">Customer Registeration</router-link>.</p>
+        </div>
+
+        <div class="mt-3">
+          <p>Register as Professional <router-link to="/signup-professional">Professional Registration</router-link>.</p>
+        </div>
+
+
         </div>
     </div>
     `,

@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_security  import UserMixin, RoleMixin
+from datetime import datetime
 
 db = SQLAlchemy()
 
@@ -29,32 +30,33 @@ class User(db.Model, UserMixin):
     professional = db.relationship('Professional', uselist=False, back_populates="user")  # One-to-One
 
 
+class Role(db.Model, RoleMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), unique=True, nullable=False)
+    description = db.Column(db.String(255))
+
+
 class Customer(db.Model):
     id = db.Column(db.Integer,autoincrement=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Foreign key to User
     address = db.Column(db.String(255))
     phone = db.Column(db.String(15))
-
     user = db.relationship('User', back_populates="customer")
 
 
 class Professional(db.Model):
     id = db.Column(db.Integer,autoincrement=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Foreign key to User
-    date_created = db.Column(db.Date, nullable=False)
-    description = db.Column(db.String(255))
-    service_type = db.Column(db.String(255))
+    service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=False)  # Foreign key to Service
+    date_created = db.Column(db.Date,default=datetime.now(), nullable=False)
+    address = db.Column(db.String(255))
+    pincode = db.Column(db.Integer)
     experience = db.Column(db.Integer)
-    is_approved = db.Column(db.Boolean(), default=False)
 
     user = db.relationship('User', back_populates="professional")
-
-
-class Role(db.Model, RoleMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80), unique=True, nullable=False)
-    description = db.Column(db.String(255))
-
+    service = db.relationship('Service', back_populates="professionals")  # Linking to Service
+    
+    
 
 class Service(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
@@ -62,6 +64,9 @@ class Service(db.Model):
     price = db.Column(db.Integer)
     time_required = db.Column(db.Integer)
     description = db.Column(db.String(255))
+
+    
+    professionals = db.relationship('Professional', back_populates="service", cascade="all, delete-orphan")
 
 
 class ServiceRequest(db.Model):

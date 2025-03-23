@@ -1,8 +1,9 @@
 from flask import current_app as app, jsonify, request, render_template
 from flask_security import auth_required, roles_required
-from .models import Service, db, User
+from .models import Service, db, User, Professional, Customer
 from .datastore import datastore
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash 
+import datetime
 
 
 @app.get('/')
@@ -72,3 +73,103 @@ def user_login():
         return jsonify({"message": "Password not matched"}), 400
     
 
+@app.route("/register-professional", methods=["POST"])
+def register_professional():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+    username = data.get('full_name')
+
+    user = datastore.find_user(email=email)
+    
+    if user:
+        return jsonify({"message": "Email already exists"}), 400
+
+        
+    datastore.create_user(username= username, email=email, password=generate_password_hash(password), roles=["professional"], active = False)
+    user = datastore.find_user(email=email)
+
+    service_name= data.get('service_name')
+
+
+    service = Service.query.filter_by(name=service_name).first()
+
+    # Create Professional Entry
+    new_professional = Professional(
+        user_id=user.id,
+        service_id = service.id,
+        address=data.get('address'),
+        pincode=data.get('pincode'),
+        experience=data.get('experience')
+    )
+
+    db.session.add(new_professional)
+    db.session.commit()
+
+    return jsonify({"message": "Professional registered successfully!"}), 200
+
+
+
+
+@app.route("/register-customer", methods=["POST"])
+def register_customer():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+    username = data.get('full_name')
+
+    user = datastore.find_user(email=email)
+    
+    if user:
+        return jsonify({"message": "Email already exists"}), 400
+
+        
+    datastore.create_user(username= username, email=email, password=generate_password_hash(password), roles=["customer"], active = True)
+    user = datastore.find_user(email=email)
+
+
+    new_customer = Customer(
+        user_id=user.id,
+        address=data.get('address'),
+        phone=data.get('phone'),
+    )
+
+    db.session.add(new_customer)
+    db.session.commit()
+
+    return jsonify({"message": "Customer registered successfully!"}), 200
+
+
+
+@app.route('/professionals', methods=['GET'])
+@auth_required('token')
+@roles_required("admin")
+def get_professionals():
+    professionals = db.session.query(
+        Professional.id,
+        Professional.date_created,
+        Professional.address,
+        Professional.pincode,
+        Professional.experience,
+        Service.name.label('service_name'),  # Fetch Service name
+        User.username.label('professional_name'),  # Fetch Professional's Name from User table
+        User.active.label('active')
+    ).join(User, User.id == Professional.user_id) \
+     .join(Service, Service.id == Professional.service_id) \
+     .all()
+
+    result = []
+    for p in professionals:
+        result.append({
+            "id": p.id,
+            "name": p.professional_name,
+            "date_created": p.date_created.strftime("%Y-%m-%d"),
+            "address": p.address,
+            "pincode": p.pincode,
+            "experience": p.experience,
+            "service": p.service_name,
+            "is_active":p.active
+        })
+    # print(result)
+
+    return jsonify(result), 200
