@@ -14,11 +14,11 @@ with app.app_context():
     if not datastore.find_user(email="admin@email.com"):
         datastore.create_user(username= "admin", email="admin@email.com", password=generate_password_hash("admin"), roles=["admin"])
 
-    if not datastore.find_user(email="customer1@email.com"):
-        datastore.create_user(username= "customer1", email="customer1@email.com", password=generate_password_hash("customer1"), roles=["customer"])
+    # if not datastore.find_user(email="customer1@email.com"):
+    #     datastore.create_user(username= "customer1", email="customer1@email.com", password=generate_password_hash("customer1"), roles=["customer"])
 
-    if not datastore.find_user(email="professional1@email.com"):
-        datastore.create_user(username= "professional1", email="professional1@email.com", password=generate_password_hash("professional1"), roles=["professional"], active = False)
+    # if not datastore.find_user(email="professional1@email.com"):
+    #     datastore.create_user(username= "professional1", email="professional1@email.com", password=generate_password_hash("professional1"), roles=["professional"], active = False)
 
 
 

@@ -44,7 +44,9 @@ class Services(Resource):
     @roles_required("admin")
     def delete(self):
         args = update_parser.parse_args()
+        print(args)
         ser = Service.query.get(args["id"])
+        print(ser)
         if not ser:
             return {"message":"Service not found"}, 404
         db.session.delete(ser)

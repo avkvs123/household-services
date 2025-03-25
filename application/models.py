@@ -4,11 +4,6 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
-# class RolesUsers(db.Model):
-#     __tablename__ = 'roles_users'
-#     id = db.Column(db.Integer, primary_key=True)
-#     user_id = db.Column('user_id', db.Integer(), db.ForeignKey('user.id'))
-#     role_id = db.Column('role_id', db.Integer(), db.ForeignKey('role.id'))
 
 class RolesUsers(db.Model):
     __tablename__ = 'roles_users'
@@ -74,7 +69,7 @@ class ServiceRequest(db.Model):
     service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=False)
     customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'))
     professional_id = db.Column(db.Integer, db.ForeignKey('professional.id'))
-    date_of_request = db.Column(db.Date, nullable=False)
+    date_of_request = db.Column(db.Date, default=datetime.now(), nullable=False)
     date_of_completion = db.Column(db.Date)
     service_status = db.Column(db.String(20), nullable=False, default="requested")  # requested/assigned/closed
     remarks = db.Column(db.String(255))
