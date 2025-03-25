@@ -283,6 +283,7 @@ export default {
             selectedService: {
                 id: null,
                 name: "",
+                time_required: "",
                 description: "",
                 price: "",
               },

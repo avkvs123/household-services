@@ -28,6 +28,10 @@ export default {
                 <input v-model="formData.experience" type="number" class="form-control" id="experience" required />
             </div>
             <div class="mb-3">
+            <div class="mb-3">
+                <label for="phone" class="form-label">Phone</label>
+                <input v-model="formData.phone" type="text" class="form-control" id="phone" required />
+            </div>
                 <label for="service_name" class="form-label">Service Name</label>
                 <select v-model="formData.service_name" class="form-select" id="service_name" required>
                     <option v-for="service in services" :key="service.id" :value="service.name">{{ service.name }}</option>
@@ -54,6 +58,7 @@ export default {
                 "address": null,
                 "pincode": null,
                 "experience": null,
+                "phone":null,
                 "service_name": null,
                 "document": null,
             },

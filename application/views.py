@@ -98,7 +98,8 @@ def register_professional():
         service_id = service.id,
         address=data.get('address'),
         pincode=data.get('pincode'),
-        experience=data.get('experience')
+        experience=data.get('experience'),
+        phone=data.get('phone')
     )
 
     db.session.add(new_professional)
@@ -216,6 +217,7 @@ def get_service_requests():
             "date_of_request": sr.date_of_request.strftime("%Y-%m-%d"),
             "date_of_completion": sr.date_of_completion.strftime("%Y-%m-%d") if sr.date_of_completion else None,
             "service_status": sr.service_status,
+            "rating":sr.rating,
             "remarks": sr.remarks
         })
 
@@ -309,3 +311,72 @@ def deactivate_customer(customer_id):
     return jsonify({"message": "Customer deactivated successfully"}), 200
 
 
+@app.get('/service-professionals/<int:service_id>')
+@auth_required('token')
+@roles_required("customer")
+def service_professionals(service_id):
+    # Query to fetch professionals linked to the service and are active
+    professionals = (
+        db.session.query(Professional)
+        .join(User, Professional.user_id == User.id)
+        .filter(Professional.service_id == service_id, User.active == True)
+        .all()
+    )
+
+    
+
+    # Convert the results into a list of dictionaries
+    result = [
+        {
+            "id": p.id,
+            "name": p.user.username,  # Assuming 'username' is the professional's name
+            "email":p.user.email,
+            "date_created": p.date_created.strftime("%Y-%m-%d"),
+            "phone":p.phone,
+            "address": p.address,
+            "pincode": p.pincode,
+            "experience": p.experience
+        }
+        for p in professionals
+    ]
+
+    print(f"professional are: {professionals}")
+
+    return jsonify(result), 200
+
+
+@app.post('/customer/close_service')
+@auth_required('token')
+@roles_required("customer")
+def close_service_request():
+    try:
+        data = request.get_json()
+        request_id = data.get("request_id")
+        remarks = data.get("remarks", "")  # Default to empty string if not provided
+        rating = data.get("rating")
+
+        if not request_id:
+            return jsonify({"error": "Request ID is required"}), 400
+
+        # Fetch the service request
+        service_request = ServiceRequest.query.get(request_id)
+
+        if not service_request:
+            return jsonify({"error": "Service request not found"}), 404
+
+        # if service_request.service_status == "closed":
+        #     return jsonify({"message": "Service request is already closed"}), 400
+
+        # Update the service request
+        service_request.service_status = "closed"
+        service_request.remarks = remarks
+        service_request.rating = rating
+        service_request.date_of_completion = datetime.date.today()
+
+        db.session.commit()
+
+        return jsonify({"message": "Service request closed successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+        

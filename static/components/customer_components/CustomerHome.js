@@ -13,17 +13,33 @@ export default {
             </h2>
             <div id="servicesCollapse" class="accordion-collapse collapse show" data-bs-parent="#customerAccordion">
                 <div class="accordion-body">
-                    <div class="row">
-                        <div class="col-md-4" v-for="service in services" :key="service.id">
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <h5 class="card-title">{{ service.name }}</h5>
-                                    <p class="card-text">{{ service.description }}</p>
-                                    <button class="btn btn-primary" @click="openModal">View Details</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                        <table class="table table-bordered table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Service Name</th>
+                                <th>Price</th>
+                                <th>Time Required (min)</th>
+                                <th>Description</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="service in services" :key="service.id">
+                                <td>{{ service.id }}</td>
+                                <td>{{ service.name }}</td>
+                                <td>Rs. {{ service.price }}</td>
+                                <td>{{ service.time_required }}</td>
+                                <td>{{ service.description }}</td>
+                                <td>
+                                    <button class="btn btn-primary" @click="openModal(service)">View Details</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+
+
                 </div>
             </div>
         </div>
@@ -38,31 +54,37 @@ export default {
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <div v-if="service">
-                            <h3>{{ service.name }}</h3>
-                            <p>{{ service.description }}</p>
-                            <p><strong>Base Price:</strong> {{ service.base_price }}</p>
+                        <div v-if="selectedService">
+                            <h3>{{ selectedService.name }}</h3>
+                            <p><strong>Description: </strong>{{ selectedService.description }}</p>
+                            <p><strong>Time Required: </strong>{{ selectedService.time_required }}</p>
+                            <p><strong>Base Price:</strong> {{ selectedService.price }}</p>
 
                             <h4>Available Professionals</h4>
-                            <div v-if="professionals.length > 0">
+                            <div v-if="service_professionals.length > 0">
                                 <table class="table table-striped">
                                     <thead>
                                         <tr>
                                             <th>Name</th>
                                             <th>Email</th>
                                             <th>Phone</th>
+                                            <th>Address</th>
+                                            <th>Pincode</th>
                                             <th>Experience</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr v-for="prof in professionals" :key="prof.id">
-                                            <td>{{ prof.full_name }}</td>
+                                        <tr v-for="prof in service_professionals" :key="prof.id">
+                                            <td>{{ prof.name }}</td>
                                             <td>{{ prof.email }}</td>
+                                            <td>{{ prof.phone }}</td>
+                                            
+                                            <td>{{ prof.address }}</td>                                           
                                             <td>{{ prof.pincode }}</td> <!-- Assuming pincode stores contact -->
                                             <td>{{ prof.experience || 'N/A' }}</td>
                                             <td>
-                                                <button class="btn btn-primary" @click="requestService(prof.id, service.id)">Request Service</button>
+                                                <button class="btn btn-primary" @click="requestService(prof.id, selectedService.id)">Request Service</button>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -91,22 +113,30 @@ export default {
                                 <th>ID</th>
                                 <th>Service Name</th>
                                 <th>Professional Name</th>
-                                <th>Phone Number</th>
+                                <th>Date of Request</th>
+                                <th>Date of Completion</th>
+                                <th>Rating</th>
+                                <th>Remarks</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="history in serviceHistory" :key="history.id">
-                                <td>{{ history.id }}</td>
-                                <td>{{ history.service_name }}</td>
-                                <td>{{ history.professional_name }}</td>
-                                <td>{{ history.phone }}</td>
-                                <td>{{ history.status }}</td>
+                            <tr v-for="sr in serviceHistory" :key="sr.id">
+                                <td>{{ sr.id }}</td>
+                                <td>{{ sr.service_name }}</td>
+                                <td>{{ sr.professional_username }}</td>
+                                <td>{{ sr.date_of_request }}</td>
+                                <td>{{ sr.date_of_completion }}</td>
+                                <td>{{ sr.rating }}</td>
+                                <td>{{ sr.remarks }}</td>
+                                <td>{{ sr.service_status }}</td>
+
+                                
                                 <td>
-                                    <button v-if="history.status !== 'closed'" 
+                                    <button v-if="sr.service_status !== 'closed'" 
                                         class="btn btn-warning" 
-                                        @click="openRatingModal(history.id)">
+                                        @click="openRatingModal(sr)">
                                         Close It
                                     </button>
                                     <span v-else class="text-success">Closed</span>
@@ -130,12 +160,16 @@ export default {
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="rating" class="form-label">Rating (1-5)</label>
-                        <input type="number" class="form-control" v-model="rating" min="1" max="5" required>
+                        <input type="number" class="form-control" v-model="rating_remarks.rating" min="1" max="5" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="remarks" class="form-label">Remarks</label>
+                        <textarea v-model="rating_remarks.remarks" class="form-control" id="remarks" rows="3" required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" @click="submitRating">Submit Rating</button>
+                    <button type="button" class="btn btn-primary" @click="submitRating()">Submit Rating</button>
                 </div>
             </div>
         </div>
@@ -149,15 +183,75 @@ export default {
         return {
             services: [],
             serviceHistory: [],
+            service_professionals: [], 
+            
             token: localStorage.getItem("auth-token"),
             ratingModalVisible: false,
             selectedHistoryId: null,
             rating: null,
+
+            rating_remarks:{
+                request_id:null,
+                rating:null,
+                remarks:null
+            },
+
+            selectedService: {
+                id: null,
+                name: "",
+                description: "",
+                time_required: "",
+                price: ""
+              },
         };
     },
 
 
     methods: {
+        async openModal(service) {
+            // Set selected service details in the modal
+            this.selectedService = { ...service };
+            const response = await fetch(`/service-professionals/${service.id}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authentication-Token': this.token
+                }
+            });
+            this.service_professionals = await response.json();
+      
+            // Open Bootstrap modal programmatically
+            let modal = new bootstrap.Modal(document.getElementById('serviceModal'));
+            modal.show();
+          },
+
+        async  requestService(prof_id, service_id){
+            const response = await fetch(`/create-service-request`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authentication-Token': this.token
+                },
+                body:JSON.stringify({
+                    "service_id":service_id,
+                    "professional_id":prof_id
+                  })
+            });
+
+            const data = await response.json();
+                console.log(data)
+                if (response.ok) {
+                    alert("Service Request Created Successfully")
+                    this.fetchServiceHistory();
+                    let modal = bootstrap.Modal.getInstance(document.getElementById('serviceModal'));
+                    modal.hide();
+                }
+                else{
+                    alert(`Error: ${data.message}`)
+                }
+        },
+
+
         async fetchServices() {
             const response = await fetch('/api/services', {
                 method: 'GET',
@@ -169,7 +263,7 @@ export default {
             this.services = await response.json();
         },
         async fetchServiceHistory() {
-            const response = await fetch('/api/service-history', {
+            const response = await fetch('/api/service-requests', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -178,33 +272,38 @@ export default {
             });
             this.serviceHistory = await response.json();
         },
-        openRatingModal(historyId) {
-            this.selectedHistoryId = historyId;
-            this.ratingModalVisible = true;
+
+
+        openRatingModal(sr) {
+            this.rating_remarks.request_id = sr.id
+            let modal = new bootstrap.Modal(document.getElementById('ratingModal'));
+            modal.show();
+            
         },
-        closeRatingModal() {
-            this.ratingModalVisible = false;
-            this.selectedHistoryId = null;
-            this.rating = null;
-        },
+
         async submitRating() {
-            if (!this.rating || this.rating < 1 || this.rating > 5) {
+            if (!this.rating_remarks || this.rating_remarks.rating < 1 || this.rating_remarks.rating > 5) {
                 alert('Please provide a valid rating between 1 and 5.');
                 return;
             }
             try {
-                const response = await fetch(`/customer/close_service/${this.selectedHistoryId}`, {
+                const response = await fetch(`/customer/close_service`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authentication-Token': this.token
                     },
-                    body: JSON.stringify({ rating: this.rating })
+                    body: JSON.stringify(this.rating_remarks)
                 });
+
+                console.log(this.rating_remarks)
+                console.log(response.json())
                 if (response.ok) {
                     alert('Service closed successfully!');
-                    this.fetchServiceHistory(); // Refresh history after closing service
-                    this.closeRatingModal();
+                    let modal = new bootstrap.Modal(document.getElementById('ratingModal'));
+                    modal.hide();
+                    this.fetchServiceHistory();
+                    
                 } else {
                     alert('Failed to close the service. Please try again.');
                 }
