@@ -256,7 +256,14 @@ export default {
                                     <td>{{ request.service_name || '' }}</td>
                                     <td>{{ request.date_of_request || '' }}</td>
                                     <td>{{ request.date_of_completion || '' }}</td>
-                                    <td>{{ request.service_status || '' }}</td>
+                                    <td>
+                                    <span :class="{'text-success': request.service_status === 'closed', 'text-info': request.service_status === 'completed', 
+                                    'text-danger': request.service_status === 'rejected', 
+                                     'text-warning': request.service_status === 'accepted' }">
+                                    {{ request.service_status || '' }}
+                                            </span>
+                                    
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>

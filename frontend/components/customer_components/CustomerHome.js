@@ -11,7 +11,7 @@ export default {
                     Available Services
                 </button>
             </h2>
-            <div id="servicesCollapse" class="accordion-collapse collapse show" data-bs-parent="#customerAccordion">
+            <div id="servicesCollapse" class="accordion-collapse collapse" data-bs-parent="#customerAccordion">
                 <div class="accordion-body">
                         <table class="table table-bordered table-hover">
                         <thead class="table-dark">
@@ -134,13 +134,18 @@ export default {
 
                                 
                                 <td>
-                                    <button v-if="sr.service_status !== 'closed'" 
+                                    <button 
+                                        v-if="sr.service_status !== 'closed' && sr.service_status !== 'rejected'"
                                         class="btn btn-warning" 
                                         @click="openRatingModal(sr)">
                                         Close It
                                     </button>
+                                    
+                                    <span v-else-if="sr.service_status === 'rejected'" class="text-danger">Rejected</span>
+                                    
                                     <span v-else class="text-success">Closed</span>
                                 </td>
+
                             </tr>
                         </tbody>
                     </table>

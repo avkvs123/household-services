@@ -8,6 +8,9 @@ dependencies:
   - flask-restful
   - flask-security-too
   - flask-wtf
+  - flask-caching
+  - redis
+  - celery
   - werkzeug
   - email-validator
   - pip

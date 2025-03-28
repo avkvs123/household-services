@@ -214,6 +214,7 @@ def get_service_requests():
             "customer_phone": sr.customer.phone if sr.customer else None,
             "professional_id": sr.professional_id,
             "professional_username": sr.professional.user.username if sr.professional else None,
+            "professional_pincode": sr.professional.pincode if sr.professional else None,
             "date_of_request": sr.date_of_request.strftime("%Y-%m-%d"),
             "date_of_completion": sr.date_of_completion.strftime("%Y-%m-%d") if sr.date_of_completion else None,
             "service_status": sr.service_status,
@@ -380,3 +381,45 @@ def close_service_request():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
         
+
+@app.post('/professional/take-action')
+@auth_required('token')
+@roles_required("professional")
+def service_request_action_by_professional():
+    try:
+        data = request.get_json()
+        print(data)
+        request_id = data.get("request_id")
+        status = data.get("action") 
+
+
+        
+        if not request_id:
+            return jsonify({"error": "Service Request ID is required"}), 400
+
+        # Fetch the service request
+        service_request = ServiceRequest.query.get(request_id)
+
+
+
+        if not service_request:
+            return jsonify({"error": "Service request not found"}), 404
+
+        print(f"Status requested : {status} and type is {type(status)}")
+
+        if str(status) != "accepted" and str(status) != 'rejected' and str(status) != 'completed':
+            return jsonify({"error": "Service status provided is not correct"}), 404
+        
+
+
+        # Update the service request
+        service_request.service_status = status
+        service_request.date_of_completion = datetime.date.today()
+
+        db.session.commit()
+
+        return jsonify({"message": "Service request action taken successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
