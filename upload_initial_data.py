@@ -1,7 +1,7 @@
 from main import app
-from application.models import db, Role, Service
+from backend.application.models import db,  Service
 from werkzeug.security import generate_password_hash 
-from application.datastore import datastore
+from backend.application.datastore import datastore
 
 with app.app_context():
     db.create_all()
