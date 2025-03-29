@@ -13,7 +13,7 @@ const Home = {
 
     data(){
         return {
-            user_role: this.$route.query['role']
+            user_role: localStorage.getItem('role')
         }
     },
     components: {

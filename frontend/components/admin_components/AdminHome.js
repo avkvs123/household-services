@@ -280,7 +280,6 @@ export default {
             serviceRequests: [],
             customers: [],
             token: localStorage.getItem("auth-token"),
-            showAddServiceModal: false,  // Controls modal visibility
             newService: {
                 name: "",
                 price: "",

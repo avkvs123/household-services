@@ -12,7 +12,10 @@ export default {
             <router-link class="nav-link active" aria-current="page" to="/">Home</router-link>
             </li>
             <li class="nav-item" v-if="role=='admin'">
-                <router-link class"nav-link" to=/users>Users</router-link>
+                <router-link class="nav-link"  to="/admin-search">Search</router-link>
+            </li> 
+            <li class="nav-item" v-if="role=='customer'">
+                <router-link class="nav-link"  to="/customer-search">Search</router-link>
             </li> 
             <li class="nav-item" v-if="is_login">
                 <button class="nav-link" @click='logout'>Logout</button>

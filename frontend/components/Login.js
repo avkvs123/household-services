@@ -51,6 +51,8 @@ export default {
                 this.user_role=response_data.role
                 if (response_data.token){
                     localStorage.setItem('auth-token', response_data.token)
+                    console.log("Role is", response_data.role)
+                    localStorage.setItem('role', response_data.role)
                     this.$router.push({path:'/', query:{role: response_data.role}})
                 }
             }
