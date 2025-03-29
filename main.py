@@ -4,6 +4,7 @@ from flask_security import Security
 from backend.config import  DevelopmentConfig
 from backend.application.resources import api
 from backend.application.datastore import datastore
+from backend.application.worker import celery_init_app
 
 
 def create_app():
@@ -20,6 +21,7 @@ def create_app():
 
 
 app, datastore = create_app()
+celery_app = celery_init_app(app)
 
 
 if __name__ == "__main__":
