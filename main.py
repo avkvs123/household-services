@@ -7,6 +7,7 @@ from backend.application.datastore import datastore
 from backend.application.worker import celery_init_app
 
 
+
 def create_app():
     app = Flask(__name__, static_folder="frontend", static_url_path="/static", template_folder="backend/templates")
     app.config.from_object(DevelopmentConfig)

@@ -10,11 +10,11 @@ dependencies:
   - flask-wtf
   - flask-caching
   - redis
-  - celery
   - werkzeug
   - email-validator
   - pip
   - pip:
+      - celery
       - flask[async]
 # Install it using -
 # conda env create -f environment.yml --prefix .\myenv
