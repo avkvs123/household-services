@@ -1,8 +1,10 @@
 from flask_restful import Resource, Api, reqparse, fields, marshal_with
 from .models import Service, db
 from flask_security import auth_required, roles_required
+from flask import current_app as app
 
 api = Api(prefix='/api')
+cache = app.cache
 
 parser = reqparse.RequestParser()
 parser.add_argument('name', type=str, help="name is required and  should be a string", required=True)
@@ -26,6 +28,7 @@ service_fields = {
 }
 
 class Services(Resource):
+    @cache.cached()
     @marshal_with(service_fields)
     def get(self):
         all_services = Service.query.all()

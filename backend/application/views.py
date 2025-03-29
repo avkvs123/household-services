@@ -4,12 +4,27 @@ from .models import Service, db, User, Professional, Customer, ServiceRequest
 from .datastore import datastore
 from werkzeug.security import check_password_hash, generate_password_hash 
 import datetime
+from .celery.tasks import say_hello, add
+
+cache = app.cache
+
 
 
 @app.get('/')
 def home():
     return render_template("base.html")
 
+
+@app.get('/cache')
+@cache.cached(timeout=5)
+def cache_time():
+    return {'time':str(datetime.datetime.now())}
+
+
+@app.get('/celery')
+def celery_test():
+    t = add.delay(10,20)
+    return jsonify({"message":t.id})
 
 @app.get('/admin')
 @auth_required('token')
@@ -143,6 +158,7 @@ def register_customer():
 @app.route('/api/professionals', methods=['GET'])
 @auth_required('token')
 @roles_required("admin")
+@cache.cached(timeout=60)
 def get_professionals():
     professionals = db.session.query(
         Professional.id,
@@ -261,6 +277,7 @@ def create_service_request():
 @app.route('/api/customers', methods=['GET'])
 @auth_required('token')
 @roles_required("admin")
+@cache.cached(timeout=60)
 def get_customers():
     customers = db.session.query(
         Customer.id,
@@ -315,6 +332,7 @@ def deactivate_customer(customer_id):
 @app.get('/service-professionals/<int:service_id>')
 @auth_required('token')
 @roles_required("customer")
+@cache.memoize()
 def service_professionals(service_id):
     # Query to fetch professionals linked to the service and are active
     professionals = (
@@ -422,4 +440,9 @@ def service_request_action_by_professional():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+
+
+
 
