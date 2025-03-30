@@ -267,9 +267,54 @@ export default {
                                 </tr>
                             </tbody>
                         </table>
+
+                        
+
                     </div>
                 </div>
             </div>
+
+
+
+
+            <!-- Get Data Section -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="getDataHeading">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#dataCollapse">
+                        Get service Requests Data
+                    </button>
+                </h2>
+                <div id="dataCollapse" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
+                    <div class="accordion-body">
+                    <div class="button-container d-flex gap-3">
+                    <!-- Create CSV Button -->
+                    <button 
+                        @click="create_csv"
+                        class="btn btn-primary fw-semibold px-4 py-2 shadow-sm"
+                    >
+                        🚀 Create CSV
+                    </button>
+
+                    <!-- Get CSV Button (Disabled when task_id is null) -->
+                    <button 
+                        @click="get_csv"
+                        :disabled="task_id === null"
+                        class="btn fw-semibold px-4 py-2 shadow-sm
+                            btn-success"
+                    >
+                        📥 Get CSV
+                    </button>
+                </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+
+
+
+
         </div>
     </div>
     `,
@@ -279,6 +324,7 @@ export default {
             professionals: [],
             serviceRequests: [],
             customers: [],
+            task_id: localStorage.getItem('task_id') || null,
             token: localStorage.getItem("auth-token"),
             newService: {
                 name: "",
@@ -292,7 +338,7 @@ export default {
                 time_required: "",
                 description: "",
                 price: "",
-              },
+            },
         };
     },
     mounted() {
@@ -302,6 +348,65 @@ export default {
         this.fetchServiceRequests();
     },
     methods: {
+        async create_csv() {
+            try {
+                const response = await fetch('/create-csv', {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authentication-Token': this.token
+                    }
+                });
+                const response_data = await response.json();
+                console.log(response_data)
+                if (response.ok) {
+                    localStorage.setItem('task_id', response_data.task_id)
+                    alert(`Success: ${response_data.message}`); // Show backend message in a popup
+                } else {
+                    console.error("Error:", response_data.message);
+                    alert(`Error: ${response_data.message}`);
+                }
+
+            } catch (error) {
+                console.error("Network error:", error);
+                alert(`Error: ${response_data.message}`);
+            }
+
+
+        },
+
+        async get_csv() {
+            const task_id = localStorage.getItem('task_id');
+            if (!task_id) {
+                alert("Task ID is not present. Please generate the CSV first.");
+            } else {
+
+                const response = await fetch(`/get-csv/${task_id}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authentication-Token': this.token
+                    }
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    alert(`Error: ${errorData.message}`);
+                    return;
+                }
+                const blob = await response.blob(); // Convert response to a file blob
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "generated_data.csv"; // Set desired filename
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+
+                alert("CSV file downloaded successfully!");
+
+            }
+
+        },
+
         async fetchServices() {
             const response = await fetch('/api/services');
             this.services = await response.json();
@@ -314,33 +419,33 @@ export default {
                     'Authentication-Token': this.token
                 }
             });
-            
+
             this.professionals = await response.json();
             console.log(this.professionals)
         },
         async fetchServiceRequests() {
-            const response = await fetch('/api/service-requests',{
+            const response = await fetch('/api/service-requests', {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authentication-Token': this.token
                 }
             });
-            
+
             this.serviceRequests = await response.json();
             console.log(this.serviceRequests)
         },
-        async showAddServiceModal(){
+        async showAddServiceModal() {
             console.log("Create_new_service")
         },
-        
+
 
         async toggleProfessionalStatus(professional) {
             try {
                 const activate = !professional.is_active;
-                const url = activate 
-                    ? `/activate_professional/${professional.id}` 
+                const url = activate
+                    ? `/activate_professional/${professional.id}`
                     : `/deactivate_professional/${professional.id}`;
-                
+
                 const response = await fetch(url, {
                     method: "GET",
                     headers: {
@@ -364,93 +469,93 @@ export default {
                 alert("Network error. Please try again.");
             }
         },
-        async deleteService(id){
+        async deleteService(id) {
             console.log(id)
-            const response = await fetch('/api/services',{
+            const response = await fetch('/api/services', {
                 method: "delete",
                 headers: {
                     "Content-Type": "application/json",
                     "Authentication-Token": this.token,  // Ensure you're passing the auth token
                 },
-                body: JSON.stringify({"id":id}),
+                body: JSON.stringify({ "id": id }),
             });
             const data = await response.json();
-                console.log(data)
-                if (response.ok) {
-                    alert("Service Deleted Successfully")
-                    this.fetchServices();
-                }
-                else{
-                    alert(`Error: ${data.message}`)
-                }
+            console.log(data)
+            if (response.ok) {
+                alert("Service Deleted Successfully")
+                this.fetchServices();
+            }
+            else {
+                alert(`Error: ${data.message}`)
+            }
         },
 
         async addService() {
             try {
-              const response = await fetch("/api/services", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "Authentication-Token": this.token,  // Ensure you pass the auth token correctly
-                },
-                body: JSON.stringify(this.newService),
-              });
-      
-              const data = await response.json();
-              if (response.ok) {
-                alert("Service Added Successfully!");
-                this.showAddServiceModal = false;  // Close modal on success
-                let modal = bootstrap.Modal.getInstance(document.getElementById('addServiceModal'));
-                modal.hide();
+                const response = await fetch("/api/services", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authentication-Token": this.token,  // Ensure you pass the auth token correctly
+                    },
+                    body: JSON.stringify(this.newService),
+                });
 
-                this.fetchServices();
-              } else {
-                alert(`Error: ${data.message}`);
-              }
+                const data = await response.json();
+                if (response.ok) {
+                    alert("Service Added Successfully!");
+                    this.showAddServiceModal = false;  // Close modal on success
+                    let modal = bootstrap.Modal.getInstance(document.getElementById('addServiceModal'));
+                    modal.hide();
+
+                    this.fetchServices();
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
             } catch (error) {
-              console.error("Error:", error);
-              alert("Failed to add service.");
+                console.error("Error:", error);
+                alert("Failed to add service.");
             }
-          },
-          openEditModal(service) {
+        },
+        openEditModal(service) {
             // Set selected service details in the modal
             this.selectedService = { ...service };
-      
+
             // Open Bootstrap modal programmatically
             let modal = new bootstrap.Modal(document.getElementById('editServiceModal'));
             modal.show();
-          },
-          async updateService() {
+        },
+        async updateService() {
             try {
-              console.log("Updating service:", this.selectedService);
-      
-              const response = await fetch(`/api/services`, {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                  "Authentication-Token":this.token, // Ensure correct token is sent
-                },
-                body: JSON.stringify(this.selectedService),
-              });
-      
-              const data = await response.json();
-              if (response.ok) {
-                alert("Service Updated Successfully!");
-      
-                // Close the modal using Bootstrap's JS API
-                let modal = bootstrap.Modal.getInstance(document.getElementById('editServiceModal'));
-                modal.hide();
-                this.fetchServices();
-              } else {
-                alert(`Error: ${data.message}`);
-              }
-            } catch (error) {
-              console.error("Error:", error);
-              alert("Failed to update service.");
-            }
-          },
+                console.log("Updating service:", this.selectedService);
 
-          async fetchCustomers() {
+                const response = await fetch(`/api/services`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authentication-Token": this.token, // Ensure correct token is sent
+                    },
+                    body: JSON.stringify(this.selectedService),
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert("Service Updated Successfully!");
+
+                    // Close the modal using Bootstrap's JS API
+                    let modal = bootstrap.Modal.getInstance(document.getElementById('editServiceModal'));
+                    modal.hide();
+                    this.fetchServices();
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Failed to update service.");
+            }
+        },
+
+        async fetchCustomers() {
             try {
                 const response = await fetch('/api/customers', {
                     method: "GET",
@@ -467,10 +572,10 @@ export default {
         async toggleCustomerStatus(customer) {
             try {
                 const activate = !customer.is_active;
-                const url = activate 
-                    ? `/activate_customer/${customer.id}` 
+                const url = activate
+                    ? `/activate_customer/${customer.id}`
                     : `/deactivate_customer/${customer.id}`;
-                
+
                 const response = await fetch(url, {
                     method: "GET",
                     headers: {
@@ -493,7 +598,7 @@ export default {
                 alert("Network error. Please try again.");
             }
         }
-    
-        
+
+
     }
 };

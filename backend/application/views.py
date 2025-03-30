@@ -6,6 +6,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 import datetime
 from .celery.tasks import say_hello, add, create_csv
 from celery.result import AsyncResult
+import os
 
 cache = app.cache
 
@@ -48,7 +49,7 @@ def task_status(task_id):
 @roles_required("admin")
 def create_csv_of_service_requests():
     t = create_csv.delay()
-    return jsonify({"task_id": t.id}), 200
+    return jsonify({"task_id": t.id, "message":"Task Started Successfully"}), 200
 
 
 @app.get('/get-csv/<task_id>')
