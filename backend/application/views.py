@@ -1,18 +1,13 @@
-from flask import current_app as app, jsonify, request, render_template
+from flask import current_app as app, jsonify, request, render_template, send_file
 from flask_security import auth_required, roles_required, current_user
 from .models import Service, db, User, Professional, Customer, ServiceRequest
 from .datastore import datastore
 from werkzeug.security import check_password_hash, generate_password_hash 
 import datetime
-from .celery.tasks import say_hello, add
+from .celery.tasks import say_hello, add, create_csv
+from celery.result import AsyncResult
 
 cache = app.cache
-
-
-
-@app.get('/')
-def home():
-    return render_template("base.html")
 
 
 @app.get('/cache')
@@ -21,10 +16,67 @@ def cache_time():
     return {'time':str(datetime.datetime.now())}
 
 
+@app.get('/say-hello')
+def say_hello_check():
+    t = say_hello.delay()
+    return jsonify({"task_id":t.id})
+
+
 @app.get('/celery')
 def celery_test():
     t = add.delay(10,20)
     return jsonify({"message":t.id})
+
+@app.get('/task-status/<task_id>')
+def task_status(task_id):
+    task = AsyncResult(task_id)
+    if task.state == 'PENDING':
+        response = {"status": "Pending", "message": "Task is in queue or processing."}
+    elif task.state == 'SUCCESS':
+        response = {"status": "Completed", "filepath": task.result}
+    elif task.state == 'FAILURE':
+        response = {"status": "Failed", "message": str(task.result)}
+    else:
+        response = {"status": task.state, "message": "Task is still processing."}
+
+    return jsonify(response)
+
+
+
+@app.get('/create-csv')
+@auth_required('token')
+@roles_required("admin")
+def create_csv_of_service_requests():
+    t = create_csv.delay()
+    return jsonify({"task_id": t.id}), 200
+
+
+@app.get('/get-csv/<task_id>')
+@auth_required('token')
+@roles_required("admin")
+def get_csv(task_id):
+    task = AsyncResult(task_id)
+
+    if task.state == 'PENDING':
+        return jsonify({"status": "Pending", "message": "Task is still processing."}), 202
+
+    elif task.state == 'FAILURE':
+        return jsonify({"status": "Failed", "message": str(task.result)}), 500
+
+    elif task.state == 'SUCCESS':
+        file_path = task.result
+
+        if not os.path.exists(file_path):
+            return jsonify({"status": "Error", "message": "File not found."}), 404
+
+        return send_file(file_path, as_attachment=True), 200
+
+    else:
+        return jsonify({"status": task.state, "message": "Task is still processing."}), 202
+
+
+
+
 
 @app.get('/admin')
 @auth_required('token')
@@ -32,6 +84,10 @@ def celery_test():
 def admin():
     return "Welcome Admin"
 
+
+@app.get('/')
+def home():
+    return render_template("base.html")
 
 
 @app.get('/activate_professional/<int:prof_id>')

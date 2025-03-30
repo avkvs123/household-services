@@ -5,6 +5,8 @@ from backend.config import  DevelopmentConfig
 from backend.application.datastore import datastore
 from backend.application.celery.celery_factory import celery_init_app
 from flask_caching import Cache
+import flask_excel as excel
+
 
 
 
@@ -12,13 +14,19 @@ def create_app():
     app = Flask(__name__, static_folder="frontend", static_url_path="/static", template_folder="backend/templates")
     app.config.from_object(DevelopmentConfig)
     db.init_app(app)
-    cache = Cache(app)   
-    app.cache = cache  
+    cache = Cache(app)  
+    excel.init_excel(app) 
+    app.cache = cache 
+
     app.security = Security(app, datastore)
     with app.app_context():
         from backend.application.resources import api
         api.init_app(app)
         import backend.application.views
+
+
+
+
         
     return app, datastore
 
