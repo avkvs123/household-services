@@ -27,6 +27,7 @@ dependencies:
 
 # Start Celery Worker in wsl: In ~/household-services (working directory where main file can be found)
 # celery -A main:celery_app worker -l INFO
+# celery -A main:celery_app beat -l INFO
 
 
 # Redis in wsl
@@ -38,5 +39,11 @@ dependencies:
 
 # Start Mail hog
 # ~/go/bin/MailHog
+# Then go to url: 
+# http://localhost:8025/
+# For viewing the mails
 
 
+# Open wsl filesystem fro windows explorer
+# \\wsl$\Ubuntu\home\
+# paste above in windows explorer
