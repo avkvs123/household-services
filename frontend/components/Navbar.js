@@ -26,17 +26,19 @@ export default {
     </div>
     </nav>
     `,
-    data(){
+    data() {
         return {
             role: localStorage.getItem('role'),
             is_login: localStorage.getItem("auth-token")
         }
     },
-    methods:{
-        logout(){
+    methods: {
+        logout() {
             localStorage.removeItem('auth-token')
             localStorage.removeItem('role')
-            this.$router.push({path:'/login'})
+            localStorage.removeItem('task_id')
+            localStorage.removeItem('download_count')
+            this.$router.push({ path: '/login' })
         },
     },
 }

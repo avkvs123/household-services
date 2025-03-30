@@ -274,14 +274,11 @@ export default {
                 </div>
             </div>
 
-
-
-
             <!-- Get Data Section -->
             <div class="accordion-item">
                 <h2 class="accordion-header" id="getDataHeading">
                     <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#dataCollapse">
-                        Get service Requests Data
+                        Get Closed Service Requests Data
                     </button>
                 </h2>
                 <div id="dataCollapse" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
@@ -292,7 +289,7 @@ export default {
                         @click="create_csv"
                         class="btn btn-primary fw-semibold px-4 py-2 shadow-sm"
                     >
-                        🚀 Create CSV
+                        🚀Create CSV
                     </button>
 
                     <!-- Get CSV Button (Disabled when task_id is null) -->
@@ -302,7 +299,7 @@ export default {
                         class="btn fw-semibold px-4 py-2 shadow-sm
                             btn-success"
                     >
-                        📥 Get CSV
+                        📥Get CSV
                     </button>
                 </div>
                     </div>
@@ -350,17 +347,51 @@ export default {
     methods: {
         async create_csv() {
             try {
+
+
+
                 const response = await fetch('/create-csv', {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authentication-Token': this.token
                     }
                 });
+
+
                 const response_data = await response.json();
-                console.log(response_data)
+
                 if (response.ok) {
                     localStorage.setItem('task_id', response_data.task_id)
-                    alert(`Success: ${response_data.message}`); // Show backend message in a popup
+                    localStorage.setItem('download_count', 0)
+                    // alert(`Success: ${response_data.message}`); // Show backend message in a popup
+                    const task_id = response_data.task_id
+
+                    const interval = setInterval(async () => {
+                        const result = await fetch(`/get-csv/${task_id}`, {
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authentication-Token': this.token
+                            }
+                        });
+
+                        if (result.ok) {
+                            console.log(`data is ready`);
+                            const blob = await result.blob(); // Convert response to a file blob
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = "generated_data.csv"; // Set desired filename
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            window.URL.revokeObjectURL(url);
+
+                            // alert("CSV file downloaded successfully!");
+                            clearInterval(interval);
+                        }
+
+                    }, 100)
+
                 } else {
                     console.error("Error:", response_data.message);
                     alert(`Error: ${response_data.message}`);
@@ -377,7 +408,7 @@ export default {
         async get_csv() {
             const task_id = localStorage.getItem('task_id');
             if (!task_id) {
-                alert("Task ID is not present. Please generate the CSV first.");
+                alert("Please generate the CSV first.");
             } else {
 
                 const response = await fetch(`/get-csv/${task_id}`, {
@@ -401,8 +432,17 @@ export default {
                 a.remove();
                 window.URL.revokeObjectURL(url);
 
-                alert("CSV file downloaded successfully!");
+                // Track download count
+                let downloadCount = parseInt(localStorage.getItem('download_count') || "0", 10);
+                downloadCount += 1;
+                localStorage.setItem('download_count', downloadCount);
 
+                // Reset task_id after 5 downloads
+                if (downloadCount >= 5) {
+                    localStorage.removeItem('task_id');
+                    localStorage.removeItem('download_count'); // Reset count
+                    alert("Download limit reached. Please generate a new CSV.");
+                }
             }
 
         },
