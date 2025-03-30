@@ -21,3 +21,22 @@ dependencies:
 # For installation in local folder
 # For activating the environemnt:
 # conda activate ./myenv
+
+
+
+
+# Start Celery Worker in wsl: In ~/household-services (working directory where main file can be found)
+# celery -A main:celery_app worker -l INFO
+
+
+# Redis in wsl
+# sudo systemctl enable redis-server                          ->           enable redis server
+# sudo systemctl start redis-server                           ->           start redis server
+# sudo systemctl status redis-server                          ->           status of redis server
+
+
+
+# Start Mail hog
+# ~/go/bin/MailHog
+
+

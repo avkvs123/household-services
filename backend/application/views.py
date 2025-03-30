@@ -489,7 +489,7 @@ def service_request_action_by_professional():
 
         # Update the service request
         service_request.service_status = status
-        service_request.date_of_completion = datetime.date.today()
+        # service_request.date_of_completion = datetime.date.today()
 
         db.session.commit()
 

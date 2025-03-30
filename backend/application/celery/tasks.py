@@ -2,8 +2,118 @@ from celery import shared_task
 from backend.application.models import *
 import flask_excel as excel
 import datetime
+from datetime import timedelta
 from flask import current_app
 import os
+from backend.application.celery.mail_service import send_email 
+from jinja2 import Template
+import calendar
+
+
+def generate_html_report(customer, service_requests):
+    template = Template("""
+    <html>
+    <body>
+        <h2>Monthly Activity Report - {{ month_year }}</h2>
+        <p>Dear {{ customer_name }},</p>
+        <p>Here is your service activity for the month:</p>
+        <table border='1' cellpadding='5' cellspacing='0'>
+            <tr>
+                <th>Service</th>
+                <th>Status</th>
+                <th>Date Requested</th>
+                <th>Date Completed</th>
+                <th>Remarks</th>
+            </tr>
+            {% for request in service_requests %}
+            <tr>
+                <td>{{ request.service.name }}</td>
+                <td>{{ request.service_status }}</td>
+                <td>{{ request.date_of_request.strftime('%Y-%m-%d') }}</td>
+                <td>{{ request.date_of_completion.strftime('%Y-%m-%d') if request.date_of_completion else 'N/A' }}</td>
+                <td>{{ request.remarks if request.remarks else 'N/A' }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <p>Thank you for using our services.</p>
+    </body>
+    </html>
+    """)
+    return template.render(
+        month_year=datetime.datetime.today().strftime('%B %Y'),
+        customer_name=customer.user.username,
+        service_requests=service_requests
+    )
+
+
+
+
+@shared_task(ignore_result=True)
+def scheduler_check():
+    send_email('avkvs123@gmail.com', "Test MAil", "<h1>Test Mail</h1>", 'html')
+
+
+
+@shared_task(ignore_result=True)
+def daily_email_reminder():
+
+    # send_email(to, subject, content)
+    professionals = (
+        db.session.query(Professional)
+        .join(ServiceRequest, Professional.id == ServiceRequest.professional_id)
+        .filter(ServiceRequest.service_status.in_(['requested', 'accepted']))
+        .join(User, Professional.user_id == User.id)
+        .all()
+    )
+
+    if not professionals:
+        print(f"No professionals with pending requests")
+    
+    for professional in professionals:
+        if professional.user.email:
+            subject = "Service Request Action Required"
+            body = f"Hello {professional.user.username},\n\nYou have pending service requests. Please take action as soon as possible.\n\nBest,\nYour Service Management Team"
+            send_email(professional.user.email, subject, body, 'text')
+            print(f"Email sent to {professional.user.email}")
+
+
+@shared_task(ignore_result=True)
+def monthly_report_to_customers():
+    # Get the first and last day of the previous month
+    today = datetime.datetime.today()
+    # Determine the first and last day of the previous month
+    first_day_last_month = today.replace(day=1) - timedelta(days=1)  # Last day of the previous month
+    first_day_last_month = first_day_last_month.replace(day=1)  # First day of the previous month
+    last_day_last_month = datetime.datetime(first_day_last_month.year, first_day_last_month.month, calendar.monthrange(first_day_last_month.year, first_day_last_month.month)[1])
+
+
+    print(f"First Day Last Month: {first_day_last_month}, Last Day Last Month: {last_day_last_month}")
+    
+    # Fetch customers
+    customers = Customer.query.all()
+
+    print(f"Customers are {customers}")
+    
+    for customer in customers:
+        # Fetch service requests for this customer from the previous month
+        service_requests = ServiceRequest.query.filter(
+            ServiceRequest.customer_id == customer.id
+            # ServiceRequest.date_of_request >= first_day_last_month,  # Start of last month
+            # ServiceRequest.date_of_request <= last_day_last_month    # End of last month
+        ).all()
+
+        print(f"Service Requests for {customer.id}: {service_requests}")
+        
+        # Generate HTML report
+        report_html = generate_html_report(customer, service_requests)
+        
+        # Send email
+        send_email(customer.user.email, 'Monthly Report',report_html, 'html')
+
+
+
+
+
 
 @shared_task(ignore_result=False)
 def say_hello():
